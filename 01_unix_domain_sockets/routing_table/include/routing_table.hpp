@@ -67,8 +67,8 @@ struct routing_table_entry
 	/**
 	 * @brief Deserialize a buffer into a routing table entry
 	 *
-	 * @param buffer - the buffer containing the serialized data
 	 * @param entry - the routing table entry to populate
+	 * @param buffer - the buffer containing the serialized data
 	 */
 	static void deserialize(routing_table_entry &entry,
 				const uint8_t* buffer);
