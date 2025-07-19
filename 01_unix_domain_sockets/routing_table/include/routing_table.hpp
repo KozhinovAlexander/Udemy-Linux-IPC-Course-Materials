@@ -20,7 +20,7 @@ namespace RTM {
 /**
  * @brief Routing Table Management Operation Codes
  */
-typedef enum
+enum
 {
 	RTM_CREATE = 0,
 	RTM_UPDATE,
@@ -28,9 +28,16 @@ typedef enum
 } cud_opcode_t;
 
 
-struct routing_table_entry
+/**
+ * @brief Routing Table Entry Structure
+ *
+ */
+struct routing_table_entry_t
 {
-	uint8_t mask;
+	uint8_t destination_mask;  // CIDR notation (e.g., 24 for /24)
+	uint8_t destination_ip[4]; // IPv4 address in dotted decimal format
+	uint8_t gateway_ip[4];     // IPv4 address in dotted decimal format
+	char oif[16];              // Output Interface (e.g., "eth0", "eth1", etc.)
 };
 
 
