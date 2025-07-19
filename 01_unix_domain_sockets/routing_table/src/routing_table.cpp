@@ -14,14 +14,6 @@ size_t routing_table_entry::size() const
 void routing_table_entry::serialize(const routing_table_entry &entry,
 				    uint8_t* buffer)
 {
-	// serialization format:
-	// nite: bytes sizes are given as 32 bit unsigned integers
-	// <total_bytes>
-	// <dest_ip_bytes><dest_ip>
-	// <gateway_ip_bytes><gateway_ip>
-	// <mask_bytes><mask>
-	// <oif_bytes><oif>
-
 	const uint32_t total_bytes = entry.size() + 4 * sizeof(uint32_t);
 
 	size_t offset = 0;
@@ -62,3 +54,11 @@ void routing_table_entry::serialize(const routing_table_entry &entry,
 
 	std::memcpy(buffer+offset, entry.oif.c_str(), entry.oif.size());
 };
+
+void routing_table_entry::deserialize(const uint8_t* buffer,
+				      routing_table_entry &entry)
+{
+
+}
+
+

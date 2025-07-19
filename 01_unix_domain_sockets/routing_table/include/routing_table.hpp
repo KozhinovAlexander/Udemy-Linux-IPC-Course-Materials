@@ -50,11 +50,27 @@ struct routing_table_entry
 	/**
 	 * @brief Serialize the routing table entry into a buffer
 	 *
+	 * erialization format:
+	 * 	<total_bytes>
+	 * 	<dest_ip_bytes><dest_ip>
+	 * 	<gateway_ip_bytes><gateway_ip>
+	 * 	<mask_bytes><mask>
+	 * 	<oif_bytes><oif>
+	 * @note: bytes sizes are given as 32 bit unsigned integers
+	 *
 	 * @param entry - the routing table entry to serialize
 	 * @param buffer - the buffer to write the serialized data into
 	 */
 	static void serialize(const routing_table_entry &entry,
 				uint8_t* buffer);
+
+	/**
+	 * @brief Deserialize a buffer into a routing table entry
+	 *
+	 * @param buffer - the buffer containing the serialized data
+	 * @param entry - the routing table entry to populate
+	 */
+	static void deserialize(const uint8_t* buffer, routing_table_entry &entry);
 };
 
 
