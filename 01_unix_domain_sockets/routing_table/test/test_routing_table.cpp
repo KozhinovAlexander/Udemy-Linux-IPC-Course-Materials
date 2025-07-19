@@ -84,7 +84,7 @@ TEST(routing_table_entry, serialize)
 	}
 }
 
-TEST(routing_table_entry, serialize)
+TEST(routing_table_entry, deserialize)
 {
 	routing_table_entry entry;
 	uint8_t buffer[128] = {0};
