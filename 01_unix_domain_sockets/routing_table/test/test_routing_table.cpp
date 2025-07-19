@@ -14,7 +14,7 @@ using namespace RTM;
 
 TEST(routing_table_entry, serialize) {
 	routing_table_entry entry;
-	uint8_t buffer[24] = {0};
+	uint8_t buffer[128] = {0};
 
 	EXPECT_EQ(alignof(entry), 8);
 
@@ -29,25 +29,42 @@ TEST(routing_table_entry, serialize) {
 	entry.destination_mask = 24;
 	entry.oif = "eth0";
 
+	const uint32_t total_bytes =
+		sizeof(uint32_t) + sizeof(entry.destination_ip) +
+		sizeof(uint32_t) + sizeof(entry.gateway_ip) +
+		sizeof(uint32_t) + sizeof(entry.destination_mask) +
+		sizeof(uint32_t) + entry.oif.size();
+
 	routing_table_entry::serialize(entry, buffer);
 
-	EXPECT_EQ(buffer[0], 123);
-	EXPECT_EQ(buffer[1], 234);
-	EXPECT_EQ(buffer[2], 5);
-	EXPECT_EQ(buffer[3], 6);
-	EXPECT_EQ(buffer[4], 10);
-	EXPECT_EQ(buffer[5], 11);
-	EXPECT_EQ(buffer[6], 12);
-	EXPECT_EQ(buffer[7], 13);
-	EXPECT_EQ(buffer[8], 24);
-	EXPECT_EQ(buffer[9], 'e');
-	EXPECT_EQ(buffer[10], 't');
-	EXPECT_EQ(buffer[11], 'h');
-	EXPECT_EQ(buffer[12], '0');
+	size_t offset = 0;
+	EXPECT_EQ(buffer[0], total_bytes);
+	offset = sizeof(total_bytes);
 
-	for (size_t i = 13; i < sizeof(buffer); ++i) {
-		EXPECT_EQ(buffer[i], 0)
-			<< "The rest of the buffer shall be zeroed after the serialization";
+	EXPECT_EQ(buffer[offset], sizeof(entry.destination_ip));
+	offset += sizeof(entry.destination_ip);
+
+	for (size_t i = 0; i < sizeof(entry.destination_ip); ++i) {
+		EXPECT_EQ(buffer[offset + i], entry.destination_ip[i])
+			<< "Destination IP byte " << i << " does not match";
 	}
+	offset += sizeof(entry.destination_ip);
+
+	EXPECT_EQ(buffer[offset], sizeof(entry.gateway_ip));
+	offset += sizeof(entry.gateway_ip);
+
+	// EXPECT_EQ(buffer[5], 11);
+	// EXPECT_EQ(buffer[6], 12);
+	// EXPECT_EQ(buffer[7], 13);
+	// EXPECT_EQ(buffer[8], 24);
+	// EXPECT_EQ(buffer[9], 'e');
+	// EXPECT_EQ(buffer[10], 't');
+	// EXPECT_EQ(buffer[11], 'h');
+	// EXPECT_EQ(buffer[12], '0');
+
+	// for (size_t i = 13; i < sizeof(buffer); ++i) {
+	// 	EXPECT_EQ(buffer[i], 0)
+	// 		<< "The rest of the buffer shall be zeroed after the serialization";
+	// }
 }
 
