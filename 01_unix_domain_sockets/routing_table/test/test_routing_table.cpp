@@ -44,7 +44,7 @@ TEST(routing_table_entry, serialize) {
 	offset = sizeof(total_bytes);
 
 	EXPECT_EQ(buffer[offset], sizeof(entry.destination_ip));
-	offset += sizeof(entry.destination_ip);
+	offset += sizeof(uint32_t);
 
 	for (size_t i = 0; i < sizeof(entry.destination_ip); ++i) {
 		EXPECT_EQ(buffer[offset + i], entry.destination_ip[i])
@@ -53,20 +53,32 @@ TEST(routing_table_entry, serialize) {
 	offset += sizeof(entry.destination_ip);
 
 	EXPECT_EQ(buffer[offset], sizeof(entry.gateway_ip));
+	offset += sizeof(uint32_t);
+
+	for (size_t i = 0; i < sizeof(entry.gateway_ip); ++i) {
+		EXPECT_EQ(buffer[offset + i], entry.gateway_ip[i])
+			<< "Gsteway IP byte " << i << " does not match";
+	}
 	offset += sizeof(entry.gateway_ip);
 
-	// EXPECT_EQ(buffer[5], 11);
-	// EXPECT_EQ(buffer[6], 12);
-	// EXPECT_EQ(buffer[7], 13);
-	// EXPECT_EQ(buffer[8], 24);
-	// EXPECT_EQ(buffer[9], 'e');
-	// EXPECT_EQ(buffer[10], 't');
-	// EXPECT_EQ(buffer[11], 'h');
-	// EXPECT_EQ(buffer[12], '0');
+	EXPECT_EQ(buffer[offset], sizeof(entry.destination_mask));
+	offset += sizeof(uint32_t);
 
-	// for (size_t i = 13; i < sizeof(buffer); ++i) {
-	// 	EXPECT_EQ(buffer[i], 0)
-	// 		<< "The rest of the buffer shall be zeroed after the serialization";
-	// }
+	EXPECT_EQ(buffer[offset], entry.destination_mask);
+	offset += sizeof(entry.destination_mask);
+
+	EXPECT_EQ(buffer[offset], entry.oif.size());
+	offset += sizeof(uint32_t);
+
+	EXPECT_EQ(buffer[offset+0], 'e');
+	EXPECT_EQ(buffer[offset+1], 't');
+	EXPECT_EQ(buffer[offset+2], 'h');
+	EXPECT_EQ(buffer[offset+3], '0');
+	offset += entry.oif.size();
+
+	for (size_t i = offset; i < sizeof(buffer); ++i) {
+		EXPECT_EQ(buffer[i], 0)
+			<< "The rest of the buffer shall be zeroed after the serialization";
+	}
 }
 

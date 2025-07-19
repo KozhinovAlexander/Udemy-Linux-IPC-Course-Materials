@@ -48,9 +48,17 @@ void routing_table_entry::serialize(const routing_table_entry &entry,
 		    sizeof(entry.gateway_ip));
 	offset += sizeof(entry.gateway_ip);
 
+	size_tmp = sizeof(entry.destination_mask);
+	std::memcpy(buffer+offset, &size_tmp, sizeof(size_tmp));
+	offset += sizeof(size_tmp);
+
 	std::memcpy(buffer+offset, &entry.destination_mask,
 		    sizeof(entry.destination_mask));
 	offset += sizeof(entry.destination_mask);
+
+	size_tmp = entry.oif.size();
+	std::memcpy(buffer+offset, &size_tmp, sizeof(size_tmp));
+	offset += sizeof(size_tmp);
 
 	std::memcpy(buffer+offset, entry.oif.c_str(), entry.oif.size());
 };
