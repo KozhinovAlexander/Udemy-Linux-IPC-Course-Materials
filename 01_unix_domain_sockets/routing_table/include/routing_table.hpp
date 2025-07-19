@@ -13,11 +13,35 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace RTM {
+
+/**
+ * @brief Routing Table Management Operation Codes
+ */
+typedef enum
+{
+	RTM_CREATE = 0,
+	RTM_UPDATE,
+	RTM_DELETE,
+} cud_opcode_t;
+
+
+struct routing_table_entry
+{
+	uint8_t mask;
+};
+
+
 class routing_table {
 public:
 	routing_table();
 	~routing_table();
+
+	int insert();
+	int update();
+	int delete();
 private:
 };
 }  // namespace RTM
