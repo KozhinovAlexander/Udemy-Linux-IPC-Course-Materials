@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <string>
 
 namespace RTM {
 
@@ -32,14 +33,15 @@ enum {
  * @brief Routing Table Entry Structure
  *
  */
-struct alignas(8) routing_table_entry_t
+struct alignas(8) routing_table_entry
 {
 	uint8_t destination_ip[4];   // IPv4 address in dotted decimal format
 	uint8_t gateway_ip[4];       // IPv4 address in dotted decimal format
 	uint8_t destination_mask;    // CIDR notation (e.g., 24 for /24)
-	char    oif[16];             // Output Interface (e.g., "eth0", "eth1", etc.)
+	std::string oif;             // Output Interface (e.g., "eth0", "eth1", etc.)
 
-	void serialize(uint8_t* buffer) const;
+	static void serialize(const routing_table_entry &entry,
+				uint8_t* buffer);
 };
 
 
