@@ -12,7 +12,8 @@
 using namespace RTM;
 
 
-TEST(routing_table_entry, size) {
+TEST(routing_table_entry, size)
+{
 	routing_table_entry entry;
 	EXPECT_EQ(entry.size(), 9);
 
@@ -20,7 +21,8 @@ TEST(routing_table_entry, size) {
 	EXPECT_EQ(entry.size(), 13);
 }
 
-TEST(routing_table_entry, serialize) {
+TEST(routing_table_entry, serialize)
+{
 	routing_table_entry entry;
 	uint8_t buffer[128] = {0};
 
