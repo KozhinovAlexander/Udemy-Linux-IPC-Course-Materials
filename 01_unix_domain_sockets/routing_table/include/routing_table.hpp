@@ -14,10 +14,10 @@
 #pragma once
 
 namespace RTM {
-	class routing_table {
-	public:
-		routing_table(/* args */);
-		~routing_table();
-	private:
-	};
+class routing_table {
+public:
+	routing_table();
+	~routing_table();
+private:
+};
 }  // namespace RTM
