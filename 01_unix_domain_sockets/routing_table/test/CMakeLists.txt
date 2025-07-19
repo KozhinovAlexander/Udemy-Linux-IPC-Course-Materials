@@ -6,7 +6,10 @@ enable_testing()
 
 set(UNIT_TEST routing_table_tests)
 
-add_executable(${UNIT_TEST} test_routing_table.cpp)
+add_executable(${UNIT_TEST}
+  main.cpp
+  test_routing_table.cpp
+)
 target_link_libraries(${UNIT_TEST} PRIVATE
   ${GTEST_LIBRARIES}
   pthread

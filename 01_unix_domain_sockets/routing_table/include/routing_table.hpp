@@ -14,14 +14,14 @@
 #pragma once
 
 #include <cstdint>
+#include <cstring>
 
 namespace RTM {
 
 /**
  * @brief Routing Table Management Operation Codes
  */
-enum
-{
+enum {
 	RTM_CREATE = 0,
 	RTM_UPDATE,
 	RTM_DELETE,
@@ -32,12 +32,14 @@ enum
  * @brief Routing Table Entry Structure
  *
  */
-struct routing_table_entry_t
+struct alignas(8) routing_table_entry_t
 {
-	uint8_t destination_mask;  // CIDR notation (e.g., 24 for /24)
-	uint8_t destination_ip[4]; // IPv4 address in dotted decimal format
-	uint8_t gateway_ip[4];     // IPv4 address in dotted decimal format
-	char oif[16];              // Output Interface (e.g., "eth0", "eth1", etc.)
+	uint8_t destination_ip[4];   // IPv4 address in dotted decimal format
+	uint8_t gateway_ip[4];       // IPv4 address in dotted decimal format
+	uint8_t destination_mask;    // CIDR notation (e.g., 24 for /24)
+	char    oif[16];             // Output Interface (e.g., "eth0", "eth1", etc.)
+
+	void serialize(uint8_t* buffer) const;
 };
 
 
@@ -48,7 +50,7 @@ public:
 
 	int insert();
 	int update();
-	int delete();
+	// int delete();
 private:
 };
 }  // namespace RTM
