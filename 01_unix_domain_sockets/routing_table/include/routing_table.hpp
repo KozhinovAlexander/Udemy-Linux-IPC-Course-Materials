@@ -33,13 +33,26 @@ enum {
  * @brief Routing Table Entry Structure
  *
  */
-struct alignas(8) routing_table_entry
+struct routing_table_entry
 {
 	uint8_t destination_ip[4];   // IPv4 address in dotted decimal format
 	uint8_t gateway_ip[4];       // IPv4 address in dotted decimal format
 	uint8_t destination_mask;    // CIDR notation (e.g., 24 for /24)
 	std::string oif;             // Output Interface (e.g., "eth0", "eth1", etc.)
 
+	/**
+	 * @brief Get the size of the routing table entry
+	 *
+	 * @return size_t - the size in bytes of the routing table entry
+	 */
+	size_t size() const;
+
+	/**
+	 * @brief Serialize the routing table entry into a buffer
+	 *
+	 * @param entry - the routing table entry to serialize
+	 * @param buffer - the buffer to write the serialized data into
+	 */
 	static void serialize(const routing_table_entry &entry,
 				uint8_t* buffer);
 };

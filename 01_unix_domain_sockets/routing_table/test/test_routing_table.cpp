@@ -12,11 +12,17 @@
 using namespace RTM;
 
 
+TEST(routing_table_entry, size) {
+	routing_table_entry entry;
+	EXPECT_EQ(entry.size(), 9);
+
+	entry.oif = "eth0";
+	EXPECT_EQ(entry.size(), 13);
+}
+
 TEST(routing_table_entry, serialize) {
 	routing_table_entry entry;
 	uint8_t buffer[128] = {0};
-
-	EXPECT_EQ(alignof(entry), 8);
 
 	entry.destination_ip[0] = 123;
 	entry.destination_ip[1] = 234;
@@ -29,11 +35,7 @@ TEST(routing_table_entry, serialize) {
 	entry.destination_mask = 24;
 	entry.oif = "eth0";
 
-	const uint32_t total_bytes =
-		sizeof(uint32_t) + sizeof(entry.destination_ip) +
-		sizeof(uint32_t) + sizeof(entry.gateway_ip) +
-		sizeof(uint32_t) + sizeof(entry.destination_mask) +
-		sizeof(uint32_t) + entry.oif.size();
+	const uint32_t total_bytes = entry.size() + 4 * sizeof(uint32_t);
 
 	routing_table_entry::serialize(entry, buffer);
 

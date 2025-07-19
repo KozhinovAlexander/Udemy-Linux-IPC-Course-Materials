@@ -3,6 +3,14 @@
 
 using namespace RTM;
 
+size_t routing_table_entry::size() const
+{
+	return sizeof(this->destination_ip) +
+	       sizeof(this->gateway_ip) +
+	       sizeof(this->destination_mask) +
+	       this->oif.size();
+};
+
 void routing_table_entry::serialize(const routing_table_entry &entry,
 				    uint8_t* buffer)
 {
@@ -14,11 +22,7 @@ void routing_table_entry::serialize(const routing_table_entry &entry,
 	// <mask_bytes><mask>
 	// <oif_bytes><oif>
 
-	const uint32_t total_bytes =
-		sizeof(uint32_t) + sizeof(entry.destination_ip) +
-		sizeof(uint32_t) + sizeof(entry.gateway_ip) +
-		sizeof(uint32_t) + sizeof(entry.destination_mask) +
-		sizeof(uint32_t) + entry.oif.size();
+	const uint32_t total_bytes = entry.size() + 4 * sizeof(uint32_t);
 
 	size_t offset = 0;
 	uint32_t size_tmp = 0;
