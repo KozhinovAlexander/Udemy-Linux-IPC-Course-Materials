@@ -55,8 +55,8 @@ void routing_table_entry::serialize(const routing_table_entry &entry,
 	std::memcpy(buffer+offset, entry.oif.c_str(), entry.oif.size());
 };
 
-void routing_table_entry::deserialize(const uint8_t* buffer,
-				      routing_table_entry &entry)
+void routing_table_entry::deserialize(outing_table_entry &entry,
+				      const uint8_t* buffer)
 {
 
 }
