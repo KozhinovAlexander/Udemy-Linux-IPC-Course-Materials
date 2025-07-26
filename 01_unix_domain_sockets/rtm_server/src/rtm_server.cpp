@@ -4,6 +4,14 @@
  * @brief Routig Table Manager (RTM) Server implementation
  */
 
-#include <server.hpp>
+#include <rtm_server.hpp>
 
 using namespace RTM;
+
+
+rtm_server::rtm_server() {
+	rtm_table.clear();
+}
+
+rtm_server::~rtm_server() {
+}

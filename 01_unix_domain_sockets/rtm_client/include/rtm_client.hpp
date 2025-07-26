@@ -10,9 +10,9 @@
 
 namespace RTM {
 
-class Client {
-	public:
-	private:
+class rtm_client {
+public:
+private:
 };
 
 }  // namespace RTM

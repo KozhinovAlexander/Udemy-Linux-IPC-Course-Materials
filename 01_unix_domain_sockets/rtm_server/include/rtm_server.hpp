@@ -29,11 +29,16 @@
 
 #pragma once
 
+#include <routing_table.hpp>
+
 namespace RTM {
 
-class Server {
+class rtm_server {
 public:
+	rtm_server();
+	~rtm_server();
 private:
+	routing_table rtm_table;
 };
 
 }  // namespace RTM

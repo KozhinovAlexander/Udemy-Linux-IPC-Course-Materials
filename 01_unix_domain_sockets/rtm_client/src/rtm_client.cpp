@@ -4,7 +4,7 @@
  * @brief Routig Table Manager (RTM) Client implementation
  */
 
-#include <client.hpp>
+#include <rtm_client.hpp>
 
 
 using namespace RTM;

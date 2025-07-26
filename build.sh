@@ -12,3 +12,6 @@ cmake -S . -B "$BUILD_DIR"
 
 # Build the project
 cmake --build "$BUILD_DIR"
+
+mkdir -p "$BUILD_DIR/install"
+cmake --install "$BUILD_DIR" --prefix "$BUILD_DIR/install"
