@@ -1,2 +1,2 @@
-add_subdirectory(client)
-add_subdirectory(server)
+add_subdirectory(rtm_client)
+add_subdirectory(rtm_server)
