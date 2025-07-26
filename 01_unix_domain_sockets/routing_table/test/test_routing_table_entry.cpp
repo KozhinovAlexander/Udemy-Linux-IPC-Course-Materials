@@ -42,7 +42,7 @@ TEST(routing_table_entry, destination_ip2str)
 TEST(routing_table_entry, serialize)
 {
 	routing_table_entry entry;
-	std::array<uint8_t, 128> buffer = {0};
+	std::vector<uint8_t> buffer;
 
 	entry.destination_ip[0] = 123;
 	entry.destination_ip[1] = 234;
@@ -178,7 +178,7 @@ TEST(routing_table_entry, deserialize)
 {
 	routing_table_entry entry1;
 	routing_table_entry entry2;
-	std::array<uint8_t, 128> buffer = {0};
+	std::vector<uint8_t> buffer;
 
 	entry1.destination_ip[0] = 17;
 	entry1.destination_ip[1] = 91;

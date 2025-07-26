@@ -16,8 +16,9 @@
 #include <stdexcept>
 #include <cstdint>
 #include <cstring>
+#include <cassert>
 #include <string>
-#include <array>
+#include <vector>
 #include <span>
 #include <map>
 
@@ -39,8 +40,16 @@ enum {
  */
 struct routing_table_entry
 {
-	uint8_t destination_ip[4];   // IPv4 address in dotted decimal format
-	uint8_t gateway_ip[4];       // IPv4 address in dotted decimal format
+	union {
+		// IPv4 address in dotted decimal format
+		uint8_t destination_ip[4];
+		uint32_t destination_ip_u32;
+	};
+	union {
+		// IPv4 address in dotted decimal format
+		uint8_t gateway_ip[4];
+		uint32_t gateway_ip_u32;
+	};
 	uint8_t destination_mask;    // CIDR notation (e.g., 24 for /24)
 	std::string oif;             // Output Interface (e.g., "eth0", "eth1", etc.)
 
@@ -91,108 +100,21 @@ struct routing_table_entry
 	 * @note: bytes sizes are given as 32 bit unsigned integers
 	 *
 	 * @param entry - the routing table entry to serialize
-	 * @param buffer - the std::array buffer to write the serialized data into
+	 * @param buffer - the buffer to write the serialized data into
 	 * @return size_t - the number of bytes written to the buffer
 	 */
-	template <std::size_t N>
 	static size_t serialize(const routing_table_entry &entry,
-				std::array<uint8_t, N>& buffer)
-	{
-		const uint32_t total_bytes = entry.size() + 5 * sizeof(uint32_t);
-
-		size_t offset = 0;
-		uint32_t size_tmp = 0;
-
-		if (total_bytes > buffer.size()) {
-			throw std::runtime_error(
-				"Buffer too small for routing table entry");
-		}
-
-		buffer.fill(0);
-
-		std::memcpy(buffer.data() + offset, &total_bytes, sizeof(total_bytes));
-		offset += sizeof(total_bytes);
-
-		size_tmp = sizeof(entry.destination_ip);
-		std::memcpy(buffer.data() + offset, &size_tmp, sizeof(size_tmp));
-		offset += sizeof(size_tmp);
-
-		std::memcpy(buffer.data() + offset, entry.destination_ip,
-			sizeof(entry.destination_ip));
-		offset += sizeof(entry.destination_ip);
-
-		size_tmp = sizeof(entry.gateway_ip);
-		std::memcpy(buffer.data() + offset, &size_tmp, sizeof(size_tmp));
-		offset += sizeof(size_tmp);
-
-		std::memcpy(buffer.data() + offset, entry.gateway_ip,
-			sizeof(entry.gateway_ip));
-		offset += sizeof(entry.gateway_ip);
-
-		size_tmp = sizeof(entry.destination_mask);
-		std::memcpy(buffer.data() + offset, &size_tmp, sizeof(size_tmp));
-		offset += sizeof(size_tmp);
-
-		std::memcpy(buffer.data() + offset, &entry.destination_mask,
-			sizeof(entry.destination_mask));
-		offset += sizeof(entry.destination_mask);
-
-		size_tmp = entry.oif.size();
-		std::memcpy(buffer.data() + offset, &size_tmp, sizeof(size_tmp));
-		offset += sizeof(size_tmp);
-
-		std::memcpy(buffer.data() + offset, entry.oif.c_str(), entry.oif.size());
-
-		return total_bytes;
-	}
+				std::vector<uint8_t>& buffer);
 
 	/**
 	 * @brief Deserialize a std::array buffer into a routing table entry
 	 *
-	 * @param buffer - the std::array buffer containing the serialized data
+	 * @param buffer - the buffer containing the serialized data
 	 * @param entry - the routing table entry to populate
 	 * @return size_t - the number of bytes read from the buffer
 	 */
-	template <std::size_t N>
-	static size_t deserialize(const std::array<uint8_t, N>& buffer,
-				routing_table_entry &entry)
-	{
-		size_t offset = 0;
-		uint32_t size_tmp = 0;
-		uint32_t total_size = 0;
-
-		std::memcpy(&total_size, buffer.data() + offset, sizeof(total_size));
-		offset += sizeof(total_size);
-
-		std::memcpy(&size_tmp, buffer.data() + offset, sizeof(size_tmp));
-		offset += sizeof(size_tmp);
-
-		std::memcpy(entry.destination_ip, buffer.data() + offset,
-			    size_tmp);
-		offset += sizeof(destination_ip);
-
-		std::memcpy(&size_tmp, buffer.data() + offset, sizeof(size_tmp));
-		offset += sizeof(size_tmp);
-
-		std::memcpy(entry.gateway_ip, buffer.data() + offset,
-			    size_tmp);
-		offset += sizeof(gateway_ip);
-
-		std::memcpy(&size_tmp, buffer.data() + offset, sizeof(size_tmp));
-		offset += sizeof(size_tmp);
-
-		std::memcpy(&entry.destination_mask, buffer.data() + offset,
-			    size_tmp);
-		offset += sizeof(destination_mask);
-
-		std::memcpy(&size_tmp, buffer.data() + offset, sizeof(size_tmp));
-		offset += sizeof(size_tmp);
-
-		entry.oif.resize(size_tmp);
-		std::memcpy(&entry.oif[0], buffer.data() + offset, size_tmp);
-
-		return total_size;
-	}
+	static size_t deserialize(const std::vector<uint8_t>& buffer,
+				  routing_table_entry &entry);
 };
 
 
@@ -237,7 +159,7 @@ public:
 	 * @param key 	- the key of the entry to retrieve
 	 * @return const routing_table_entry& - the reference to routing table entry
 	 */
-	const routing_table_entry& at(const std::string& key) const
+	const routing_table_entry& at(const uint32_t& key) const
 	{
 		return this->table.at(key);
 	}
@@ -284,35 +206,7 @@ public:
 	 * @note: each entry has its own serialization size at the beginnig
 	 * @note: all sizes are given as 32 bit unsigned integers
 	 */
-	template <std::size_t N>
-	static size_t serialize(routing_table &table, std::array<uint8_t, N>& buffer)
-	{
-		// Total size consists of:
-		// - 4 bytes for total size
-		// - 4 bytes for number of entries
-		// - size of each serialized entry (will be calculated later)
-		uint32_t total_size = 4 + 4;
-		size_t offset = 4;  // buffer offset in bytes - start with number of entries
-
-		const uint32_t num_entries = static_cast<uint32_t>(table.size());
-		std::memcpy(buffer.data() + offset, &num_entries, num_entries);
-		offset += sizeof(num_entries);
-
-		size_t bytes_written = 0;
-		std::array<uint8_t, 1024> entry_buffer;  // do not expect a huge buffers so far
-		for (const auto& [key, entry] : table.table) {
-			// @note: it is not necessary to serialize the keys, since they
-			// are already included in each entry
-			bytes_written = routing_table_entry::serialize(entry, entry_buffer);
-			std::memcpy(buffer.data() + offset, entry_buffer.data(),
-				    bytes_written);
-			total_size += bytes_written;
-			offset += bytes_written;
-		}
-		std::memcpy(buffer.data(), &total_size, sizeof(total_size));
-
-		return static_cast<size_t>(total_size);
-	}
+	static size_t serialize(routing_table &table, std::vector<uint8_t> &buffer);
 
 	/**
 	 * @brief Deserialize a routing table from a buffer
@@ -327,39 +221,8 @@ public:
 	 * @note: each entry has its own serialization size at the beginnig
 	 * @note: all sizes are given as 32 bit unsigned integers
 	 */
-	template <std::size_t N>
-	static size_t deserialize(const std::array<uint8_t, N>& buffer,
-				  routing_table &table)
-	{
-		uint32_t total_size = 0;
-		uint32_t num_entries = 0;
-		size_t offset = 0;
-
-		std::memcpy(&total_size, buffer.data() + offset, sizeof(total_size));
-		offset += sizeof(total_size);
-
-		std::memcpy(&num_entries, buffer.data() + offset, sizeof(num_entries));
-		offset += sizeof(num_entries);
-
-		routing_table_entry entry;
-		size_t entry_cnt = 0;
-		uint32_t entry_size = 0;
-		std::array<uint8_t, 1024> entry_buffer = {0};
-		while(entry_cnt < num_entries) {
-			entry_buffer.fill(0);  // clear the entry buffer
-			std::memcpy(&entry_size, buffer.data() + offset, sizeof(entry_size));
-			std::memcpy(entry_buffer.data(), buffer.data() + offset, entry_size);
-
-			const auto bytes_read =
-				routing_table_entry::deserialize(entry_buffer, entry);
-			table.create_entry(entry);
-
-			offset += bytes_read;
-			entry_cnt++;
-		}
-
-		return static_cast<size_t>(offset);
-	}
+	static size_t deserialize(const std::vector<uint8_t>& buffer,
+				  routing_table &table);
 
 	/**
 	 * @brief Comparison operator for routing table entries
@@ -388,6 +251,6 @@ public:
 	 */
 	std::string to_string() const;
 private:
-	std::map<std::string, routing_table_entry> table;  // store routing table entries
+	std::map<uint32_t, routing_table_entry> table;  // store routing table entries
 };
 }  // namespace RTM
