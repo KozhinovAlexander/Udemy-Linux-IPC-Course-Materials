@@ -11,8 +11,8 @@
 namespace RTM {
 
 class rtm_client {
-	public:
-	private:
+public:
+private:
 };
 
 }  // namespace RTM

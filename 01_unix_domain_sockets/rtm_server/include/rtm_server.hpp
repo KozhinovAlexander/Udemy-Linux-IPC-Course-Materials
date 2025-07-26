@@ -31,7 +31,7 @@
 
 namespace RTM {
 
-class Server {
+class rtm_server {
 public:
 private:
 };
