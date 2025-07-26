@@ -1,1 +1,2 @@
-add_subdirectory(routing_table)
+add_subdirectory(client)
+add_subdirectory(server)
