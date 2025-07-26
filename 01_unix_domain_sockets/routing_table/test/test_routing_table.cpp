@@ -42,13 +42,13 @@ TEST_F(routing_table_test, create_entry)
 	entry.destination_mask = 31;
 	entry.oif = "ens31";
 
-	const auto num_entries = 100'000;
+	const auto num_entries = 1000'000;
 	for (size_t i = 0; i < num_entries; ++i) {
 		entry.destination_ip[0] = static_cast<uint8_t>(i >> 3*8);
 		entry.destination_ip[1] = static_cast<uint8_t>(i >> 2*8);
 		entry.destination_ip[2] = static_cast<uint8_t>(i >> 1*8);
 		entry.destination_ip[3] = static_cast<uint8_t>(i >> 0*8);
-		const auto& entry_key = entry.destination_ip2str(entry);
+		const auto& entry_key = entry.destination_ip_u32;
 
 		rt.create_entry(entry);
 
@@ -82,7 +82,7 @@ TEST_F(routing_table_test, delete_entry)
 
 	EXPECT_EQ(rt.size(), 0);
 
-	const auto num_entries = 100'000;
+	const auto num_entries = 1000'000;
 	for (size_t i = 0; i < num_entries; ++i) {
 		entry.destination_ip[0] = static_cast<uint8_t>(i >> 3*8);
 		entry.destination_ip[1] = static_cast<uint8_t>(i >> 2*8);
@@ -109,7 +109,7 @@ TEST_F(routing_table_test, comparson_operator)
 	routing_table_entry entry;
 
 	// Same tables:
-	const auto num_entries = 11;
+	const auto num_entries = 1'000;
 	for (size_t i = 0; i < num_entries; ++i) {
 		entry.destination_ip[0] = static_cast<uint8_t>(i >> 3*8);
 		entry.destination_ip[1] = static_cast<uint8_t>(i >> 2*8);
@@ -120,7 +120,7 @@ TEST_F(routing_table_test, comparson_operator)
 		entry.gateway_ip[2] = static_cast<uint8_t>(i >> 2*8);
 		entry.gateway_ip[3] = static_cast<uint8_t>(i >> 3*8);
 		entry.destination_mask = i;
-		entry.oif = "ens_" + std::to_string(i);
+		entry.oif = "ens_" + std::to_string(static_cast<uint32_t>(i));
 
 		rt.create_entry(entry);
 		rt_other.create_entry(entry);
@@ -128,7 +128,7 @@ TEST_F(routing_table_test, comparson_operator)
 	EXPECT_EQ(rt, rt_other);
 
 	// Tables differ by size:
-	const auto& entry_key = entry.destination_ip2str(entry);
+	const auto& entry_key = entry.destination_ip_u32;
 	rt_other.delete_entry(entry);
 	EXPECT_NE(rt, rt_other);
 
@@ -147,7 +147,7 @@ TEST_F(routing_table_test, comparson_operator)
 		entry.gateway_ip[2] = static_cast<uint8_t>(i + 99 >> 2*8);
 		entry.gateway_ip[3] = static_cast<uint8_t>(i + 99 >> 3*8);
 		entry.destination_mask = i;
-		entry.oif = "foo_ens_" + std::to_string(i);
+		entry.oif = "foo_ens_" + std::to_string(static_cast<uint32_t>(i));
 
 		rt_other.create_entry(entry);
 	}
@@ -156,11 +156,10 @@ TEST_F(routing_table_test, comparson_operator)
 
 TEST_F(routing_table_test, serialize_deserialize)
 {
-	constexpr auto num_entries = 100'000;
+	constexpr auto num_entries = 1'000'000;
 	constexpr auto bytes_per_entry = 38;
-	std::array<uint8_t, 2*num_entries*bytes_per_entry> buffer = {0};
+	std::vector<uint8_t> buffer(num_entries * bytes_per_entry, 0);
 	routing_table rt_deserialized;
-
 	routing_table_entry entry;
 
 	entry.destination_ip[0] = 17;
@@ -176,7 +175,7 @@ TEST_F(routing_table_test, serialize_deserialize)
 
 	const auto entry_ser_bytes = routing_table_entry::serialize(entry, buffer);
 	EXPECT_EQ(entry_ser_bytes, bytes_per_entry);
-	buffer.fill(0); // clear the buffer before serialization
+	buffer.clear();
 
 	EXPECT_EQ(rt.size(), 0);
 
