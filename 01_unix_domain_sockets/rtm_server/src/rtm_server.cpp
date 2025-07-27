@@ -15,3 +15,6 @@ rtm_server::rtm_server() {
 
 rtm_server::~rtm_server() {
 }
+
+void rtm_server::start() {
+}

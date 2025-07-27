@@ -33,10 +33,16 @@
 
 namespace RTM {
 
-class rtm_server {
+class rtm_server final {
 public:
 	rtm_server();
 	~rtm_server();
+
+	/**
+	 * @brief Starts the server
+	 *
+	 */
+	void start();
 private:
 	routing_table rtm_table;
 };
