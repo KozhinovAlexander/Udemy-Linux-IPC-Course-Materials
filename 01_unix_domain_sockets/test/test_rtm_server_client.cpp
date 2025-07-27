@@ -18,6 +18,7 @@ public:
 protected:
 	void SetUp() override
 	{
+		srv.init();
 	}
 	void TearDown() override
 	{
@@ -27,5 +28,6 @@ protected:
 
 TEST_F(rtm_server_client_test, foo)
 {
+	srv.start();
 	EXPECT_EQ(true, true);
 }

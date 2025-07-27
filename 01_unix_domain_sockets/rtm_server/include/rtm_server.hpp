@@ -29,6 +29,8 @@
 
 #pragma once
 
+#include <string>
+#include <sys/un.h>
 #include <routing_table.hpp>
 
 namespace RTM {
@@ -39,12 +41,32 @@ public:
 	~rtm_server();
 
 	/**
+	 * @brief Create a socket pair object
+	 *
+	 * @param sname - allocated socket name will be written here
+	 *
+	 * @return int - a non-zero error code or zero if ok
+	 */
+	int create_socket_pair(std::string& sname);
+
+	/**
+	 * @brief Initialize the server
+	 *
+	 * @return int - a non-zero error code or zero if ok
+	 */
+	int init();
+
+	/**
 	 * @brief Starts the server
 	 *
 	 */
 	void start();
 private:
 	routing_table rtm_table;
+	int connection_socket;
+	int data_socket;
+	struct sockaddr_un name;
+	std::string socket_name;
 };
 
 }  // namespace RTM
