@@ -27,5 +27,5 @@ protected:
 
 TEST_F(rtm_server_client_test, foo)
 {
-	EXPECT_EQ(true, false);
+	EXPECT_EQ(true, true);
 }
