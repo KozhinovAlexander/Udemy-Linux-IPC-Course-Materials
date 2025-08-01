@@ -1,3 +1,6 @@
+#include <tuple>
+#include <array>
+#include <ranges>
 #include <iomanip>
 #include <sstream>
 
@@ -234,36 +237,121 @@ bool routing_table::operator==(const routing_table& other) const
 	return true;
 }
 
-std::string routing_table::to_string() const
+std::string routing_table::to_string(const bool show_ip_hex) const
 {
-	// This function is still under development and may not be complete.
-	std::string delim = "\t | ";
-	std::string str = "Key" + delim + "Destination IP/Mask" + delim +
-			  "Gateway IP"+ delim + "OIF\n";
+	const std::string dlm = " | ";
+	const std::string dlm_open = "| ";
+	const std::string dlm_close = " |\n";
+	std::vector<std::tuple<std::string, size_t, size_t, size_t, size_t>> table_lines;
+
+	// Pre-cubstruct table header and append to table lines:
+	const std::string head_key_str = "Key";
+	const std::string head_dest_ip_str = "Destination IP/Mask";
+	const std::string head_gatew_ip_str = "Gateway IP";
+	const std::string head_oif_str = "OIF";
+	std::string table_header_str = dlm_open +
+		head_key_str + dlm +
+		head_dest_ip_str + dlm +
+		head_gatew_ip_str + dlm +
+		head_oif_str + dlm_close;
+	table_lines.push_back(std::make_tuple(table_header_str,
+			head_key_str.size(),
+			head_dest_ip_str.size(),
+			head_gatew_ip_str.size(),
+			head_oif_str.size()));
+
+	// Pre-cunstruct table lines:
 	for (const auto& [key, entry] : this->table) {
-		std::stringstream ss1;
-		ss1 << std::hex << std::setw(8) << std::setfill('0')
-		    << entry.destination_ip_u32;
-		const auto destination_ip_str =
-			std::to_string(entry.destination_ip[0]) + "." +
-			std::to_string(entry.destination_ip[1]) + "." +
-			std::to_string(entry.destination_ip[2]) + "." +
-			std::to_string(entry.destination_ip[3]) +
-			" (" + "0x" + ss1.str() + ")";
-		std::stringstream ss2;
-		ss2 << std::hex << std::setw(8) << std::setfill('0')
-		    << entry.gateway_ip_u32;
-		const auto gateway_ip_str = \
-			std::to_string(entry.gateway_ip[0]) + "." +
-			std::to_string(entry.gateway_ip[1]) + "." +
-			std::to_string(entry.gateway_ip[2]) + "." +
-			std::to_string(entry.gateway_ip[3]) +
-			" (" + "0x" + ss2.str() + ")";
+		auto destination_ip_str =
+			std::to_string(entry.destination_ip[0]) + '.' +
+			std::to_string(entry.destination_ip[1]) + '.' +
+			std::to_string(entry.destination_ip[2]) + '.' +
+			std::to_string(entry.destination_ip[3]) + '/' +
+			std::to_string(entry.destination_mask)  + ' ';
+
+		auto gateway_ip_str =
+			std::to_string(entry.gateway_ip[0]) + '.' +
+			std::to_string(entry.gateway_ip[1]) + '.' +
+			std::to_string(entry.gateway_ip[2]) + '.' +
+			std::to_string(entry.gateway_ip[3]);
+
+		if (show_ip_hex) {
+			std::stringstream ss1;
+			ss1 << std::hex << std::setw(8) << std::setfill('0')
+				<< entry.destination_ip_u32;
+			std::stringstream ss2;
+			ss2 << std::hex << std::setw(8) << std::setfill('0')
+				<< entry.gateway_ip_u32;
+
+			destination_ip_str += " (0x" + ss1.str() + ')';
+			gateway_ip_str += " (0x" + ss2.str() + ')';
+		}
 
 		const auto& key_str = entry.destination_ip2str(entry);
-		str += key_str + delim + destination_ip_str + "/" +
-			std::to_string(entry.destination_mask) + delim +
-			gateway_ip_str + delim + entry.oif + "\n";
+		const auto line_str =
+			dlm_open + key_str + dlm + destination_ip_str + dlm +
+			gateway_ip_str + dlm + entry.oif + dlm_close;
+		table_lines.push_back(std::make_tuple(line_str,
+			key_str.size(), destination_ip_str.size(),
+			gateway_ip_str.size(), entry.oif.size()));
 	}
-	return str;
+
+	// Determine each column max length:
+	std::array<size_t, 4> col_max_length = {0};
+	for(const auto& tl : table_lines) {
+		if (std::get<1>(tl) > col_max_length[0]) {
+			col_max_length[0] = std::get<1>(tl);
+		}
+
+		if (std::get<2>(tl) > col_max_length[1]) {
+			col_max_length[1] = std::get<2>(tl);
+		}
+
+		if (std::get<3>(tl) > col_max_length[2]) {
+			col_max_length[2] = std::get<3>(tl);
+		}
+
+		if (std::get<4>(tl) > col_max_length[3]) {
+			col_max_length[3] = std::get<4>(tl);
+		}
+	}
+
+	// Construct table with matching line lengths
+	std::string table_str;
+	size_t line_nr = 0;
+	for(const auto& tl : table_lines) {
+		// Compute padding lengths with to corresponding max column length:
+		size_t i = 0;
+		for (const auto&& part : std::views::split(std::get<0>(tl), '|')) {
+			const auto part_len = part.end() - part.begin() - 2;
+			if (part_len >= 0) {
+				const auto col_pad_len = col_max_length[i-1] - part_len;
+				const auto part_str = std::string(part.begin(), part.end()) +
+						std::string(col_pad_len, ' ');
+
+				if (i == 1) {
+					table_str += dlm_open;
+				}
+				table_str += part_str;
+				if (i >= 4) {
+					table_str += dlm_close;
+				} else {
+					table_str += dlm;
+				}
+
+				if (line_nr == 0 && i >= 4) {
+					// Put header delimeter line
+					table_str += dlm_open;
+					for(const auto& cml : col_max_length) {
+						table_str += std::string(cml + 2, '-') + dlm;
+					}
+					table_str.back() = '\n';
+				}
+			}
+			i++;
+		}
+		line_nr++;
+	}
+
+	return table_str;
 }

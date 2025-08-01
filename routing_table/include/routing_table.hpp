@@ -247,9 +247,10 @@ public:
 	/**
 	 * @brief Convert the routing table to a string representation
 	 *
+	 * @param show_ip_hex - shows ip as hex if true (default: false)
 	 * @return std::string& - the string representation of the routing table
 	 */
-	std::string to_string() const;
+	std::string to_string(const bool show_ip_hex = false) const;
 private:
 	std::map<uint32_t, routing_table_entry> table;  // store routing table entries
 };
