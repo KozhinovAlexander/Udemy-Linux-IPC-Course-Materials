@@ -27,11 +27,12 @@ namespace RTM {
 /**
  * @brief Routing Table Management Operation Codes
  */
-enum {
+enum cud_opcode {
 	RTM_CREATE = 0,
 	RTM_UPDATE,
 	RTM_DELETE,
-} cud_opcode_t;
+	RTM_NONE,
+};
 
 
 /**

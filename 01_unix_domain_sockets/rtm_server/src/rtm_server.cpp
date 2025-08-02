@@ -175,7 +175,9 @@ int rtm_server::init() {
 	return ret;
 }
 
-void rtm_server::table_input_runner(std::atomic<bool>& stop_request) {
+void rtm_server::table_input_runner(std::atomic<bool>& stop_request,
+				    std::mutex& rtm_table_mtx,
+				    routing_table& rtm_table) {
 	std::cout << "INF: " << "Starting table input thread..." << std::endl;
 	auto show_help = []()
 	{
@@ -194,6 +196,11 @@ void rtm_server::table_input_runner(std::atomic<bool>& stop_request) {
 		return poll(fds, 1, timeout_ms) > 0;
 	};
 
+	auto modify_entry = [&](auto fn, auto& entry) {
+		const std::lock_guard<std::mutex> lock(rtm_table_mtx);
+		fn(entry);
+	};
+
 	using namespace std::literals;
 	constexpr auto polling_time_ms = 10;
 	while(stop_request.load() == false) {
@@ -203,11 +210,19 @@ void rtm_server::table_input_runner(std::atomic<bool>& stop_request) {
 			std::string input;
 			std::getline(std::cin, input);
 			// std::cout << "You entered: [" << input << "]\n";  // could be used for debug
+			routing_table_entry entry;
 			if(input.starts_with("--help"sv)) {
 				show_help();
 			} else if(input.starts_with("--create"sv)) {
+				// const std::lock_guard<std::mutex> lock(rtm_table_mtx);
+				// rtm_table.create_entry(entry);
+				modify_entry(rtm_table.create_entry, entry);
+
+				std::cout << rtm_table.to_string() << std::endl;
 			} else if(input.starts_with("--update"sv)) {
+
 			} else if(input.starts_with("--delete"sv)) {
+				const std::lock_guard<std::mutex> lock(rtm_table_mtx);
 			}
 		} else {
 			std::this_thread::sleep_for(std::chrono::milliseconds(polling_time_ms));
@@ -228,7 +243,9 @@ int rtm_server::start() {
 
 	table_input_thread_stop_request.store(false);
 	table_input_thread = std::make_unique<std::jthread>(table_input_runner,
-		std::ref(table_input_thread_stop_request));
+		std::ref(table_input_thread_stop_request),
+		std::ref(rtm_table_mtx), std::ref(rtm_table)
+	);
 
 	server_stopped.store(false);
 	std::cout << "INF: " << "Succesfull started rtm_server." << std::endl;

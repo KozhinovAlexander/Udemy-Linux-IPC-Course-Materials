@@ -32,10 +32,11 @@
 #include <sys/un.h>
 
 #include <set>
+#include <tuple>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <memory>
-#include <deque>
 #include <routing_table.hpp>
 
 namespace RTM {
@@ -134,16 +135,19 @@ private:
 	 * @brief Table input runner is used to modify RTM table from CLI
 	 *
 	 * @param stop_request - the thread will exit gracefully if set true
+	 * @param rtm_table_mtx - routing table mutex reference
+	 * @param rtm_table - routing table reference
 	 */
-	static void table_input_runner(std::atomic<bool>& stop_request);
+	static void table_input_runner(std::atomic<bool>& stop_request,
+			std::mutex& rtm_table_mtx,
+			routing_table& rtm_table);
 
 	routing_table rtm_table;
+	std::mutex rtm_table_mtx;  // rtm_table mutex - protects rtm_table
+
 	int connection_socket;
 	int data_socket;
 	std::string socket_name;
-
-	// The deque below is used to modify entries in the rtm_table
-	std::deque<routing_table_entry> rtm_table_entry_req;
 
 	/* An array of File descriptors which the server process is maintaining
 	 * in order to talk with the connected clients. Master skt FD is also

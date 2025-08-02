@@ -31,6 +31,6 @@ TEST_F(rtm_server_client_test, start_stop)
 {
 	auto ret = srv.start();
 	EXPECT_EQ(ret, 0);
-	std::this_thread::sleep_for(std::chrono::seconds(20));
+	std::this_thread::sleep_for(std::chrono::seconds(100));
 	srv.stop();
 }
