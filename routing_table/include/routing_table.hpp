@@ -28,10 +28,10 @@ namespace RTM {
  * @brief Routing Table Management Operation Codes
  */
 enum cud_opcode {
-	RTM_CREATE = 0,
+	RTM_NONE = 0,
+	RTM_CREATE,
 	RTM_UPDATE,
 	RTM_DELETE,
-	RTM_NONE,
 };
 
 
@@ -153,6 +153,14 @@ public:
 	 * this project.
 	 */
 	void delete_entry(const routing_table_entry &entry);
+
+	/**
+	 * @brief Modifies entry according to opcode
+	 *
+	 * @param op - operation code to execute
+	 * @param entry - the entry to be modified
+	 */
+	void modify_entry(const cud_opcode op, const routing_table_entry &entry);
 
 	/**
 	 * @brief Get a routing table entry by key

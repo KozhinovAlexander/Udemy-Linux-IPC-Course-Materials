@@ -7,6 +7,7 @@
 #include <poll.h>
 #include <signal.h>
 #include <unistd.h>
+#include <functional>
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -196,11 +197,6 @@ void rtm_server::table_input_runner(std::atomic<bool>& stop_request,
 		return poll(fds, 1, timeout_ms) > 0;
 	};
 
-	auto modify_entry = [&](auto fn, auto& entry) {
-		const std::lock_guard<std::mutex> lock(rtm_table_mtx);
-		fn(entry);
-	};
-
 	using namespace std::literals;
 	constexpr auto polling_time_ms = 10;
 	while(stop_request.load() == false) {
@@ -210,20 +206,23 @@ void rtm_server::table_input_runner(std::atomic<bool>& stop_request,
 			std::string input;
 			std::getline(std::cin, input);
 			// std::cout << "You entered: [" << input << "]\n";  // could be used for debug
+			cud_opcode op = RTM_NONE;
 			routing_table_entry entry;
 			if(input.starts_with("--help"sv)) {
 				show_help();
 			} else if(input.starts_with("--create"sv)) {
-				// const std::lock_guard<std::mutex> lock(rtm_table_mtx);
-				// rtm_table.create_entry(entry);
-				modify_entry(rtm_table.create_entry, entry);
-
-				std::cout << rtm_table.to_string() << std::endl;
+				op = RTM_CREATE;
 			} else if(input.starts_with("--update"sv)) {
-
+				op = RTM_UPDATE;
 			} else if(input.starts_with("--delete"sv)) {
-				const std::lock_guard<std::mutex> lock(rtm_table_mtx);
+				op = RTM_DELETE;
 			}
+
+			if (op != RTM_NONE) {
+				const std::lock_guard<std::mutex> lock(rtm_table_mtx);
+				rtm_table.modify_entry(op, entry);
+			}
+			std::cout << rtm_table.to_string() << std::endl;
 		} else {
 			std::this_thread::sleep_for(std::chrono::milliseconds(polling_time_ms));
 		}

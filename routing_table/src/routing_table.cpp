@@ -158,6 +158,23 @@ void routing_table::delete_entry(const routing_table_entry &entry)
 	this->table.erase(entry.destination_ip_u32);
 }
 
+void routing_table::modify_entry(const cud_opcode op,
+				 const routing_table_entry &entry) {
+	switch(op) {
+		case RTM_CREATE:
+			create_entry(entry);
+			break;
+		case RTM_UPDATE:
+			update_entry(entry);
+			break;
+		case RTM_DELETE:
+			delete_entry(entry);
+			break;
+		default:
+			break;
+	}
+}
+
 size_t routing_table::serialize(routing_table &table, std::vector<uint8_t> &buffer)
 {
 	// Total size consists of:
