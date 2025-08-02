@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 
 #include <chrono>
+#include <ranges>
 #include <iostream>
 #include <rtm_server.hpp>
 
@@ -197,6 +198,14 @@ void rtm_server::table_input_runner(std::atomic<bool>& stop_request,
 		return poll(fds, 1, timeout_ms) > 0;
 	};
 
+	auto parse_entry_from_cli = [](std::string& str, routing_table_entry& entry) {
+		for (const auto&& part : std::views::split(str, ' ')) {
+			const auto pstr = std::string(part.begin(), part.end());
+			std::cout << pstr << '#';
+		}
+		std::cout << std::endl;
+	};
+
 	using namespace std::literals;
 	constexpr auto polling_time_ms = 10;
 	while(stop_request.load() == false) {
@@ -208,6 +217,7 @@ void rtm_server::table_input_runner(std::atomic<bool>& stop_request,
 			// std::cout << "You entered: [" << input << "]\n";  // could be used for debug
 			cud_opcode op = RTM_NONE;
 			routing_table_entry entry;
+			parse_entry_from_cli(input, entry);
 			if(input.starts_with("--help"sv)) {
 				show_help();
 			} else if(input.starts_with("--create"sv)) {
